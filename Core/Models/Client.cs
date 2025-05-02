@@ -6,6 +6,13 @@ using Lab3.Interfaces;
 
 public class Client : IReceiver, ISender
 {
+    public int Port { get; }
+
+    public Client(int port)
+    {
+        Port = port;
+    }
+
     public void SendMessage(NetworkStream stream, string message)
     {
         byte[] data = Encoding.UTF8.GetBytes(message);
