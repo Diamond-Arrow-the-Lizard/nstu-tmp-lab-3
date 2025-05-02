@@ -4,7 +4,7 @@ using System.Net.Sockets;
 using System.Text;
 using Lab3.Interfaces;
 
-public class ServerHandler: ISender, IReceiver
+public class ServerHandler: ISender, IReceiver 
 {
     public int Port { get; }
 
