@@ -4,11 +4,11 @@ using System.Net.Sockets;
 using System.Text;
 using Lab3.Interfaces;
 
-public class Client : IReceiver, ISender
+public class ClientHandler : IReceiver, ISender
 {
     public int Port { get; }
 
-    public Client(int port)
+    public ClientHandler(int port)
     {
         Port = port;
     }

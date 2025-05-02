@@ -11,7 +11,7 @@ public class ServerApp
     public static void Main(string[] args)
     {
         TcpListener listener = new TcpListener(IPAddress.Any, port);
-        Server server = new Server(port);
+        ServerHandler serverHandler = new ServerHandler(port);
 
         listener.Start();
         Console.WriteLine($"Сервер запущен на порту {port}");
@@ -25,10 +25,10 @@ public class ServerApp
             // Отправка списка дисков
             var drives = DriveInfo.GetDrives();
             var driveList = string.Join(";", Array.ConvertAll(drives, d => d.Name));
-            server.SendMessage(stream, driveList);
+            serverHandler.SendMessage(stream, driveList);
 
             // Получение пути от клиента
-            string path = server.ReceiveMessage(stream);
+            string path = serverHandler.ReceiveMessage(stream);
 
             string response;
             if (Directory.Exists(path))
@@ -46,7 +46,7 @@ public class ServerApp
             }
 
             // Отправка результата
-            server.SendMessage(stream, response);
+            serverHandler.SendMessage(stream, response);
             Console.WriteLine("Ответ отправлен, соединение закрыто.");
         }
 
