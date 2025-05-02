@@ -31,23 +31,33 @@ public class ServerApp
             string path = serverHandler.ReceiveMessage(stream);
 
             string response;
-            if (Directory.Exists(path))
+            try
             {
-                var entries = Directory.GetFileSystemEntries(path);
-                response = string.Join(Environment.NewLine, entries);
-            }
-            else if (File.Exists(path))
-            {
-                response = File.ReadAllText(path);
-            }
-            else
-            {
-                response = "Ошибка: путь не существует.";
+                if (Directory.Exists(path))
+                {
+                    var entries = Directory.GetFileSystemEntries(path);
+                    response = string.Join(Environment.NewLine, entries);
+                }
+                else if (File.Exists(path))
+                {
+                    response = File.ReadAllText(path);
+                }
+                else
+                {
+                    response = "Ошибка: пути не существует.";
+                }
+
+                // Отправка результата
+                serverHandler.SendMessage(stream, response);
+                Console.WriteLine("Ответ отправлен, клиент отключён.");
+
             }
 
-            // Отправка результата
-            serverHandler.SendMessage(stream, response);
-            Console.WriteLine("Ответ отправлен, клиент отключён.");
+            catch (UnauthorizedAccessException)
+            {
+                Console.WriteLine("Клиент не может получить информацию о запрошенном пути: доступ воспрещён.");
+                serverHandler.SendMessage(stream, "У вас нет прав на просмотр этого пути.");
+            }
         }
 
     }
