@@ -1,4 +1,4 @@
-namespace Lab3.Models;
+namespace Lab3.Models.Handlers;
 
 using System.Net.Sockets;
 using System.Text;
