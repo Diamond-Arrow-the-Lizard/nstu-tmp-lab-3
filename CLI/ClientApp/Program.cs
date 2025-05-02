@@ -1,42 +1,53 @@
 ﻿using System;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using Lab3.Models.Handlers;
 
 class ClientApp
 {
     const int port = 5000;
+    const string defaultIp = "127.0.0.1";
 
     static void Main()
     {
-        ClientHandler clientHandler = new ClientHandler(port);
+        var clientHandler = new ClientHandler(port);
 
-        Console.Write("Введите IP-адрес сервера: ");
-        string ipInput = Console.ReadLine()?.Trim()
-            ?? throw new ArgumentNullException(nameof(ipInput));
+        Console.Write($"Введите IP-адрес сервера [по умолчанию {defaultIp}]: ");
+        string? ipInput = Console.ReadLine()?.Trim();
+
+        if (string.IsNullOrEmpty(ipInput))
+        {
+            ipInput = defaultIp;
+            Console.WriteLine($"Используется адрес по умолчанию: {defaultIp}");
+        }
 
         if (!IPAddress.TryParse(ipInput, out IPAddress? ipAddress))
         {
-            Console.WriteLine("Неверный формат IP-адреса.");
-            return;
+            Console.WriteLine($"Неверный формат IP-адреса. Используется {defaultIp}");
+            ipAddress = IPAddress.Parse(defaultIp);
         }
 
         using var client = new TcpClient();
-        client.Connect(ipAddress, port);
-        using var stream = client.GetStream();
+        try
+        {
+            client.Connect(ipAddress, port);
+            using var stream = client.GetStream();
 
-        // Получение списка дисков
-        string drives = clientHandler.ReceiveMessage(stream);
-        Console.WriteLine("Доступные диски: " + drives);
+            // Получение списка дисков
+            string drives = clientHandler.ReceiveMessage(stream);
+            Console.WriteLine("Доступные диски: " + drives.Replace(";", " "));
 
-        Console.Write("Введите путь к каталогу или файлу: ");
-        string path = Console.ReadLine()?.Trim()
-            ?? throw new ArgumentNullException(nameof(path));
-        clientHandler.SendMessage(stream, path);
+            Console.Write("Введите путь к каталогу или файлу: ");
+            string path = Console.ReadLine()?.Trim() ?? "";
+            clientHandler.SendMessage(stream, path);
 
-        string response = clientHandler.ReceiveMessage(stream);
-        Console.WriteLine("Ответ от сервера:\n" + response);
-
+            // Получение ответа
+            string response = clientHandler.ReceiveMessage(stream);
+            Console.WriteLine("\nРезультат:\n" + response);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка: {ex.Message}");
+        }
     }
 }
