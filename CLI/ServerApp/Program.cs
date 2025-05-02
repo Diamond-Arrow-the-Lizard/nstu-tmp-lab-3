@@ -18,12 +18,12 @@ public class ServerApp
 
         TcpListener listener = new TcpListener(IPAddress.Any, port);
         listener.Start();
-        Console.WriteLine($"Сервер запущен на порту {port}");
+        Console.WriteLine($"[{DateTime.Now}] Сервер запущен на порту {port}");
 
         while (true)
         {
             using var client = listener.AcceptTcpClient();
-            Console.WriteLine("Клиент подключен.");
+            Console.WriteLine($"[{DateTime.Now}] Клиент подключен.");
             using var stream = client.GetStream();
 
             // Отправка списка дисков через DiskService
@@ -38,7 +38,7 @@ public class ServerApp
             
             // Отправка результата
             serverHandler.SendMessage(stream, response);
-            Console.WriteLine("Ответ отправлен, клиент отключён.");
+            Console.WriteLine($"[{DateTime.Now}] Ответ отправлен, клиент отключён.");
         }
     }
 }

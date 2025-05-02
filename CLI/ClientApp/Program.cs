@@ -35,7 +35,7 @@ class ClientApp
 
             // Получение списка дисков
             string drives = clientHandler.ReceiveMessage(stream);
-            Console.WriteLine("Доступные диски: " + drives.Replace(";", " "));
+            Console.WriteLine("Доступные диски:\n" + drives.Replace(";", "\n"));
 
             Console.Write("Введите путь к каталогу или файлу: ");
             string path = Console.ReadLine()?.Trim() ?? "";
