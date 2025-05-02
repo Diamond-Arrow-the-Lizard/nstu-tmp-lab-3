@@ -47,7 +47,7 @@ public class ServerApp
 
             // Отправка результата
             serverHandler.SendMessage(stream, response);
-            Console.WriteLine("Ответ отправлен.");
+            Console.WriteLine("Ответ отправлен, клиент отключён.");
         }
 
     }

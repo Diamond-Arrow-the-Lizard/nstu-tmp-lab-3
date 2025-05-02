@@ -30,17 +30,13 @@ class ClientApp
         string drives = clientHandler.ReceiveMessage(stream);
         Console.WriteLine("Доступные диски: " + drives);
 
-        while (true)
-        {
+        Console.Write("Введите путь к каталогу или файлу: ");
+        string path = Console.ReadLine()?.Trim()
+            ?? throw new ArgumentNullException(nameof(path));
+        clientHandler.SendMessage(stream, path);
 
-            Console.Write("Введите путь к каталогу или файлу: ");
-            string path = Console.ReadLine()?.Trim()
-                ?? throw new ArgumentNullException(nameof(path));
-            clientHandler.SendMessage(stream, path);
+        string response = clientHandler.ReceiveMessage(stream);
+        Console.WriteLine("Ответ от сервера:\n" + response);
 
-            string response = clientHandler.ReceiveMessage(stream);
-            Console.WriteLine("Ответ от сервера:\n" + response);
-
-        }
     }
 }
