@@ -47,7 +47,7 @@ public class ServerApp
 
             // Отправка результата
             serverHandler.SendMessage(stream, response);
-            Console.WriteLine("Ответ отправлен, соединение закрыто.");
+            Console.WriteLine("Ответ отправлен.");
         }
 
     }
