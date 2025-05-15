@@ -8,7 +8,7 @@ class ClientApp
     const int port = 5000;
     const string defaultIp = "127.0.0.1";
 
-    static void Main()
+    static async Task Main()
     {
         var clientHandler = new ClientHandler(port);
 
@@ -34,15 +34,15 @@ class ClientApp
             using var stream = client.GetStream();
 
             // Получение списка дисков
-            string drives = clientHandler.ReceiveMessage(stream);
+            var drives = await clientHandler.ReceiveMessage(stream);
             Console.WriteLine("Доступные диски:\n" + drives.Replace(";", "\n"));
 
             Console.Write("Введите путь к каталогу или файлу: ");
-            string path = Console.ReadLine()?.Trim() ?? "";
-            clientHandler.SendMessage(stream, path);
+            var path = Console.ReadLine()?.Trim() ?? "";
+            await clientHandler.SendMessage(stream, path);
 
             // Получение ответа
-            string response = clientHandler.ReceiveMessage(stream);
+            var response = await clientHandler.ReceiveMessage(stream);
             Console.WriteLine("\nРезультат:\n" + response);
         }
         catch (Exception ex)

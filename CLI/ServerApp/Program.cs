@@ -9,7 +9,7 @@ public class ServerApp
 {
     const int port = 5000;
     
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var fileSystemService = new FileSystemService();
         var diskService = new DiskService();
@@ -28,16 +28,16 @@ public class ServerApp
 
             // Отправка списка дисков через DiskService
             var driveList = diskService.GetDrivesString();
-            serverHandler.SendMessage(stream, driveList);
+            await serverHandler.SendMessage(stream, driveList);
 
             // Получение пути от клиента
-            string path = serverHandler.ReceiveMessage(stream);
+            string path = await serverHandler.ReceiveMessage(stream);
 
             // Обработка запроса через RequestHandler
             string response = requestHandler.HandleRequest(path);
             
             // Отправка результата
-            serverHandler.SendMessage(stream, response);
+            await serverHandler.SendMessage(stream, response);
             Console.WriteLine($"[{DateTime.Now}] Ответ отправлен, клиент отключён.");
         }
     }

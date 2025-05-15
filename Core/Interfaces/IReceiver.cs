@@ -4,5 +4,5 @@ namespace Lab3.Interfaces;
 
 public interface IReceiver
 {
-    string ReceiveMessage(NetworkStream stream);
+    Task<string> ReceiveMessage(NetworkStream stream);
 }

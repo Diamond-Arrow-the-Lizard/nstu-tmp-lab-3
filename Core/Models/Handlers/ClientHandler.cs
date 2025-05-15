@@ -13,16 +13,16 @@ public class ClientHandler : IReceiver, ISender
         Port = port;
     }
 
-    public void SendMessage(NetworkStream stream, string message)
+    public async Task SendMessage(NetworkStream stream, string message)
     {
         byte[] data = Encoding.UTF8.GetBytes(message);
-        stream.Write(data, 0, data.Length);
+        await stream.WriteAsync(data, 0, data.Length);
     }
 
-    public string ReceiveMessage(NetworkStream stream)
+    public async Task<string> ReceiveMessage(NetworkStream stream)
     {
         byte[] buffer = new byte[8192];
-        int bytes = stream.Read(buffer, 0, buffer.Length);
+        int bytes = await stream.ReadAsync(buffer, 0, buffer.Length);
         return Encoding.UTF8.GetString(buffer, 0, bytes);
     }
 }

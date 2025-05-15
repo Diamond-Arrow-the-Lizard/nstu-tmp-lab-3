@@ -4,5 +4,5 @@ namespace Lab3.Interfaces;
 
 public interface ISender
 {
-    void SendMessage(NetworkStream stream, string message);
+    Task SendMessage(NetworkStream stream, string message);
 }
