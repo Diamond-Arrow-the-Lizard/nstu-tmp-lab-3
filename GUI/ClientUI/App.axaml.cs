@@ -1,3 +1,4 @@
+using System;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core;
@@ -6,6 +7,7 @@ using System.Linq;
 using Avalonia.Markup.Xaml;
 using ClientUI.ViewModels;
 using ClientUI.Views;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ClientUI;
 
@@ -18,6 +20,11 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        var collection = new ServiceCollection();
+        collection = ProvideServices();
+
+        var services = collection.BuildServiceProvider();
+        
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
@@ -25,7 +32,7 @@ public partial class App : Application
             DisableAvaloniaDataAnnotationValidation();
             desktop.MainWindow = new ClientUIView
             {
-                DataContext = new ClientUIViewModel(),
+                DataContext = services.GetRequiredService<ClientUIViewModel>(),
             };
         }
 
@@ -43,5 +50,12 @@ public partial class App : Application
         {
             BindingPlugins.DataValidators.Remove(plugin);
         }
+    }
+
+    private static ServiceCollection ProvideServices()
+    {
+        var services = new ServiceCollection();
+
+        return services;
     }
 }
