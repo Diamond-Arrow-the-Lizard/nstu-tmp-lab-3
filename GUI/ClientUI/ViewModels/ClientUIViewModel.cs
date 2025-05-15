@@ -1,6 +1,6 @@
 ﻿namespace ClientUI.ViewModels;
 
-public partial class MainWindowViewModel : ViewModelBase
+public partial class ClientUIViewModel : ViewModelBase
 {
     public string Greeting { get; } = "Welcome to Avalonia!";
 }
