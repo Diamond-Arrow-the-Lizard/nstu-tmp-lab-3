@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Lab3.Interfaces;
 using Lab3.Models.Handlers;
 
-namespace ClientUI.Models;
+namespace ClientUI.Services;
 
 public class ClientService
 {
