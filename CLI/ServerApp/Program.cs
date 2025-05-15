@@ -28,16 +28,16 @@ public class ServerApp
 
             // Отправка списка дисков через DiskService
             var driveList = diskService.GetDrivesString();
-            await serverHandler.SendMessage(stream, driveList);
+            await serverHandler.SendMessageAsync(stream, driveList);
 
             // Получение пути от клиента
-            string path = await serverHandler.ReceiveMessage(stream);
+            string path = await serverHandler.ReceiveMessageAsync(stream);
 
             // Обработка запроса через RequestHandler
             string response = requestHandler.HandleRequest(path);
             
             // Отправка результата
-            await serverHandler.SendMessage(stream, response);
+            await serverHandler.SendMessageAsync(stream, response);
             Console.WriteLine($"[{DateTime.Now}] Ответ отправлен, клиент отключён.");
         }
     }

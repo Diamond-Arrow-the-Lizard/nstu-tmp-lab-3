@@ -7,7 +7,10 @@ using System.Linq;
 using Avalonia.Markup.Xaml;
 using ClientUI.ViewModels;
 using ClientUI.Views;
+using Lab3.Interfaces;
+using Lab3.Models.Handlers;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace ClientUI;
 
@@ -30,9 +33,9 @@ public partial class App : Application
             // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
             // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
             DisableAvaloniaDataAnnotationValidation();
-            desktop.MainWindow = new ClientUIView
+            desktop.MainWindow = new ClientView
             {
-                DataContext = services.GetRequiredService<ClientUIViewModel>(),
+                DataContext = services.GetRequiredService<ClientViewModel>(),
             };
         }
 
@@ -55,6 +58,11 @@ public partial class App : Application
     private static ServiceCollection ProvideServices()
     {
         var services = new ServiceCollection();
+        
+        int defaultPort = 5000;
+
+        services.AddSingleton<ClientHandler>(ch => new ClientHandler(defaultPort));
+        services.AddSingleton<ClientViewModel>();
 
         return services;
     }

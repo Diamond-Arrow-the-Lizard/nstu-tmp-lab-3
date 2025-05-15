@@ -34,15 +34,15 @@ class ClientApp
             using var stream = client.GetStream();
 
             // Получение списка дисков
-            var drives = await clientHandler.ReceiveMessage(stream);
+            var drives = await clientHandler.ReceiveMessageAsync(stream);
             Console.WriteLine("Доступные диски:\n" + drives.Replace(";", "\n"));
 
             Console.Write("Введите путь к каталогу или файлу: ");
             var path = Console.ReadLine()?.Trim() ?? "";
-            await clientHandler.SendMessage(stream, path);
+            await clientHandler.SendMessageAsync(stream, path);
 
             // Получение ответа
-            var response = await clientHandler.ReceiveMessage(stream);
+            var response = await clientHandler.ReceiveMessageAsync(stream);
             Console.WriteLine("\nРезультат:\n" + response);
         }
         catch (Exception ex)

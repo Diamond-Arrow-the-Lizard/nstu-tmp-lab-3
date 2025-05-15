@@ -1,0 +1,42 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:ClientUI.ViewModels"
+        x:Class="ClientUI.Views.ClientView"
+        x:DataType="vm:ClientViewModel"
+        Title="File System Client"
+        Width="600" Height="500">
+    <Design.DataContext>
+        <vm:ClientViewModel/>
+    </Design.DataContext>
+
+    <StackPanel Margin="20" Spacing="10">
+         <TextBlock Text="Server IP:" />
+         <TextBox Text="{Binding ServerIp}" />
+        
+        <Button Content="Connect" 
+                Command="{Binding ConnectCommand}"
+                HorizontalAlignment="Stretch"/>
+        
+        <TextBlock Text="Available Drives:"/>
+        <ListBox ItemsSource="{Binding AvailableDrives}"
+                 SelectedItem="{Binding SelectedPath}"
+                 Height="80"/>
+        
+        <TextBlock Text="Enter path:" />
+         <TextBox Text="{Binding SelectedPath}"/>
+        
+        <Button Content="Send Request" 
+                Command="{Binding SendRequestCommand}"
+                HorizontalAlignment="Stretch"/>
+        
+        <TextBlock Text="Response:"/>
+        <TextBox Text="{Binding Response}" 
+                 AcceptsReturn="True"
+                 IsReadOnly="True"
+                 TextWrapping="Wrap"
+                 Height="150"/>
+        
+        <TextBlock Text="{Binding StatusMessage}"
+                   Foreground="Gray"/>
+    </StackPanel>
+</Window>
