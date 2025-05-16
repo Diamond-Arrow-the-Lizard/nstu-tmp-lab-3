@@ -1,0 +1,30 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:ServerUI.ViewModels"
+        xmlns:converters="using:ServerUI.Converters"
+        x:Class="ServerUI.Views.ServerView"
+        x:DataType="vm:ServerViewModel"
+        Title="File Server" Height="600" Width="800">
+    <Window.Resources>
+        <converters:BoolToStartStopConverter x:Key="BoolToStartStopConverter"/>
+    </Window.Resources>
+    
+    <DockPanel>
+        <!-- Control Panel -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="10" Margin="10">
+            <TextBox Text="{Binding Port}" Width="100" Watermark="Port"/>
+            <Button Content="{Binding IsServerRunning, Converter={StaticResource BoolToStartStopConverter}}"
+                    Command="{Binding ToggleServerCommand}"
+                    Width="100"/>
+        </StackPanel>
+
+        <!-- Log Display -->
+        <ListBox ItemsSource="{Binding Logs}">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding}" TextWrapping="Wrap"/>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </DockPanel>
+</Window>

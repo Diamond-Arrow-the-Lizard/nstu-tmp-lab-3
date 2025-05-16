@@ -2,12 +2,19 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="ServerUI.App"
              xmlns:local="using:ServerUI"
+             xmlns:converters="clr-namespace:ServerUI.Converters"
              RequestedThemeVariant="Default">
              <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
     <Application.DataTemplates>
         <local:ViewLocator/>
     </Application.DataTemplates>
+             
+    <Application.Resources>
+        <ResourceDictionary>
+            <converters:BoolToStartStopConverter x:Key="BoolToStartStopConverter"/>
+        </ResourceDictionary>
+    </Application.Resources>
   
     <Application.Styles>
         <FluentTheme />
