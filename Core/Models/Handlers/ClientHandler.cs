@@ -25,4 +25,10 @@ public class ClientHandler : IReceiver, ISender
         int bytes = await stream.ReadAsync(buffer, 0, buffer.Length);
         return Encoding.UTF8.GetString(buffer, 0, bytes);
     }
+    
+    public async Task<string> SendMessageAndReceiveResponseAsync(NetworkStream stream, string message)
+    {
+        await SendMessageAsync(stream, message);
+        return await ReceiveMessageAsync(stream);
+    }
 }

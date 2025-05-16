@@ -2,13 +2,20 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="ClientUI.App"
              xmlns:local="using:ClientUI"
+             xmlns:converters="clr-namespace:ClientUI.Converters"
              RequestedThemeVariant="Default">
-             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+    <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
     <Application.DataTemplates>
-        <local:ViewLocator/>
+        <local:ViewLocator />
     </Application.DataTemplates>
-  
+    
+    <Application.Resources>
+        <ResourceDictionary>
+            <converters:PathToIconConverter x:Key="PathToIconConverter"/>
+        </ResourceDictionary>
+    </Application.Resources>
+
     <Application.Styles>
         <FluentTheme />
     </Application.Styles>

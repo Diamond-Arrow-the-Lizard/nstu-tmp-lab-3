@@ -5,25 +5,48 @@ using Lab3.Interfaces;
 public class RequestHandler : IRequestHandler
 {
     private readonly IFileSystemService _fileSystemService;
+    private readonly IDiskService _diskService; 
 
-    public RequestHandler(IFileSystemService fileSystemService)
+    public RequestHandler(IFileSystemService fileSystemService, IDiskService diskService) 
     {
         _fileSystemService = fileSystemService;
+        _diskService = diskService; 
     }
-    public string HandleRequest(string path)
+
+    public async Task<string> HandleRequestAsync(string request) 
     {
         try
         {
-            if (_fileSystemService.IsDirectory(path))
+            if (request == "LIST_DRIVES")
+            {
+                return _diskService.GetDrivesString();
+            }
+            else if (request.StartsWith("LIST "))
+            {
+                string path = request.Substring(5); // Extract path
                 return string.Join(Environment.NewLine, _fileSystemService.ListDirectory(path));
-            if (_fileSystemService.IsFile(path))
-                return _fileSystemService.ReadFile(path);
-            return "Ошибка: пути не существует.";
+            }
+            else if (request.StartsWith("GET "))
+            {
+                string filePath = request.Substring(4); // Extract file path
+                return _fileSystemService.ReadFile(filePath);
+            }
+            else
+            {
+                return "Unknown Request";
+            }
         }
         catch (UnauthorizedAccessException)
         {
-            return "У вас нет прав на просмотр этого пути.";
+            return "Permission denied";
+        }
+        catch (DirectoryNotFoundException)
+        {
+            return "Directory not found";
+        }
+        catch (FileNotFoundException)
+        {
+            return "File not found";
         }
     }
-
 }

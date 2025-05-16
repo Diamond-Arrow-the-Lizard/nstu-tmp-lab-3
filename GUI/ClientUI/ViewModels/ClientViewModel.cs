@@ -1,165 +1,172 @@
-﻿using System.IO;
-
-namespace ClientUI.ViewModels;
-
-using System;
+﻿using System;
+using System.Collections.ObjectModel;
+using System.IO;
+using System.Linq;
+using System.Net.Sockets;
+using System.Text;
+using System.Threading.Tasks;
+using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System.Collections.ObjectModel;
-using System.Net;
-using System.Net.Sockets;
-using System.Threading.Tasks;
+using ClientUI.Models;
+using Lab3.Models;
 using Lab3.Models.Handlers;
-using Models;
 
-public partial class ClientViewModel : ObservableObject
+namespace ClientUI.ViewModels
 {
-    private readonly ClientHandler _clientHandler;
-    private TcpClient _client;
-    private NetworkStream _stream;
-
-    [ObservableProperty]
-    private string _serverIp = "127.0.0.1";
-
-    [ObservableProperty]
-    private string _statusMessage = "Ready";
-
-    [ObservableProperty]
-    private string _selectedPath = "";
-
-    [ObservableProperty]
-    private string _response;
-
-    private readonly ObservableCollection<string> _availableDrives = new();
-
-    public ObservableCollection<string> AvailableDrives => _availableDrives;
- 
-    [ObservableProperty]
-    private ObservableCollection<FileSystemItem> _currentItems = new();
-
-    [ObservableProperty]
-    private string _currentPath;
-
-    [RelayCommand]
-    private async Task NavigateToAsync(FileSystemItem item)
+    public partial class ClientViewModel : ViewModelBase
     {
-        if (item?.IsDirectory != true) return;
-     
-        SelectedPath = item.Path; 
-        await SendRequestAsync();
-    }
+        private readonly ClientHandler _clientHandler;
+        private TcpClient _client;
+        private NetworkStream _stream;
+        [ObservableProperty] private string _currentPath = string.Empty;
+        [ObservableProperty] private string _serverIp = "127.0.0.1";
+        [ObservableProperty] private string _statusMessage = "Disconnected";
+        [ObservableProperty] private ObservableCollection<string> _availableDrives = new();
+        [ObservableProperty] private ObservableCollection<FileSystemItem> _currentItems = new();
+        [ObservableProperty] private string _selectedPath; // This will now represent the selected item in the upper ListBox
 
-    [RelayCommand]
-    private async Task GoUpAsync()
-    {
-        if (string.IsNullOrEmpty(CurrentPath)) return;
-     
-        var parent = System.IO.Path.GetDirectoryName(CurrentPath);
-        if (parent != null) // Change to null check
+        public ClientViewModel()
         {
-            SelectedPath = parent;
-            await SendRequestAsync();
+            _clientHandler = new ClientHandler(5000);
         }
-        else
+
+        [RelayCommand]
+        private async Task ConnectAsync()
         {
-            SelectedPath = ""; 
-            await SendRequestAsync();
-        }
-    }
-
-    public ClientViewModel(ClientHandler clientHandler)
-    {
-        _clientHandler = clientHandler;
-    }
-
-    [RelayCommand]
-    private async Task ConnectAsync()
-    {
-        try
-        {
-            StatusMessage = "Connecting...";
-            _client = new TcpClient();
-            await _client.ConnectAsync(IPAddress.Parse(ServerIp), _clientHandler.Port);
-            _stream = _client.GetStream();
-
-            var drives = await _clientHandler.ReceiveMessageAsync(_stream);
-            AvailableDrives.Clear();
-            foreach (var drive in drives.Split(';'))
+            try
             {
-                AvailableDrives.Add(drive);
+                StatusMessage = "Connecting...";
+                _client = new TcpClient();
+                await _client.ConnectAsync(ServerIp, _clientHandler.Port);
+                _stream = _client.GetStream();
+
+                var drives = await _clientHandler.ReceiveMessageAsync(_stream);
+                AvailableDrives.Clear();
+                foreach (var drive in drives.Split(';'))
+                {
+                    AvailableDrives.Add(drive);
+                }
+                CurrentPath = "/"; // Initialize current path to root for navigation
+                StatusMessage = "Connected";
             }
-            StatusMessage = "Connected";
-
-            // Optionally set the first drive as the SelectedPath for immediate display
-            if (AvailableDrives.Count > 0)
+            catch (Exception ex)
             {
-                SelectedPath = AvailableDrives[0];
-                await SendRequestAsync(); // Immediately load the contents of the first drive
+                StatusMessage = $"Error: {ex.Message}";
+                Disconnect();
             }
         }
-        catch (Exception ex)
-        {
-            StatusMessage = $"Error: {ex.Message}";
-            Disconnect();
-        }
-    }
-    [RelayCommand]
-    private async Task SendRequestAsync()
-    {
-        if (string.IsNullOrWhiteSpace(SelectedPath)) return;
 
-        try
+        [RelayCommand]
+        private async Task GoUpAsync()
         {
-            StatusMessage = "Loading...";
-            await _clientHandler.SendMessageAsync(_stream, SelectedPath);
-            var response = await _clientHandler.ReceiveMessageAsync(_stream);
-         
-            CurrentPath = SelectedPath;
-            ParseResponse(response);
-            StatusMessage = "Request completed";
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"Error: {ex.Message}";
-            Disconnect();
-        }
-    }
-    private void Disconnect()
-    {
-        _stream?.Dispose();
-        _client?.Dispose();
-        AvailableDrives.Clear();
-        Response = string.Empty;
-    }
-    private void ParseResponse(string response)
-    {
-        CurrentItems.Clear();
-        var items = response.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-
-        foreach (var item in items)
-        {
-            var isDirectory = item.EndsWith("/");
-            var cleanName = isDirectory ? item.TrimEnd('/') : item;
-
-            // Robustly combine paths and normalize
-            string fullPath;
             if (string.IsNullOrEmpty(CurrentPath) || CurrentPath == "/")
             {
-                fullPath = cleanName; // Handle root
+                // Already at the root (drives level), no need to go up further
+                AvailableDrives.Clear();
+                var drivesResponse = await _clientHandler.SendMessageAndReceiveResponseAsync(_stream, "LIST_DRIVES");
+                if (drivesResponse != null)
+                {
+                    foreach (var drive in drivesResponse.Split(';'))
+                    {
+                        AvailableDrives.Add(drive);
+                    }
+                    CurrentPath = "/";
+                    CurrentItems.Clear(); // Clear the lower list as well
+                }
+                return;
+            }
+
+            var parentPath = Directory.GetParent(CurrentPath)?.FullName?.Replace('\\', '/');
+            if (parentPath == null)
+            {
+                CurrentPath = "/"; // Go back to the root (drives)
+                AvailableDrives.Clear();
+                var drivesResponse = await _clientHandler.SendMessageAndReceiveResponseAsync(_stream, "LIST_DRIVES");
+                if (drivesResponse != null)
+                {
+                    foreach (var drive in drivesResponse.Split(';'))
+                    {
+                        AvailableDrives.Add(drive);
+                    }
+                    CurrentItems.Clear(); // Clear the lower list
+                }
             }
             else
             {
-                fullPath = CurrentPath + "/" + cleanName;
+                CurrentPath = parentPath;
+                await LoadCurrentPathContentsAsync();
             }
+        }
 
-            CurrentItems.Add(new FileSystemItem
+        partial void OnSelectedPathChanged(string value)
+        {
+            if (_client != null && !string.IsNullOrEmpty(value))
             {
-                Name = cleanName,
-                Path = fullPath,
-                IsDirectory = isDirectory
-            });
+                // Check if the selected item in the upper list is a directory (ends with '/')
+                if (value.EndsWith("/"))
+                {
+                    CurrentPath = value;
+                    LoadCurrentPathContentsAsync().ConfigureAwait(false);
+                }
+                else
+                {
+                    // Assume it's a file, request its content
+                    LoadFileContentAsync(value).ConfigureAwait(false);
+                }
+            }
+        }
+
+        private async Task LoadCurrentPathContentsAsync()
+        {
+            if (_client == null || _stream == null || string.IsNullOrEmpty(CurrentPath))
+                return;
+
+            var response = await _clientHandler.SendMessageAndReceiveResponseAsync(_stream, $"LIST {CurrentPath}");
+            if (response != null)
+            {
+                ParseDirectoryResponse(response);
+            }
+        }
+
+        private void ParseDirectoryResponse(string response)
+        {
+            AvailableDrives.Clear(); // Clear the upper list to show directory contents
+            CurrentItems.Clear();    // Clear the lower list
+
+            var items = response.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            foreach (var item in items)
+            {
+                var isDirectory = item.EndsWith("/");
+                var cleanName = isDirectory ? item.TrimEnd('/') : item;
+                AvailableDrives.Add(CurrentPath == "/" ? cleanName + (isDirectory ? "/" : "") : Path.Combine(CurrentPath, cleanName).Replace('\\', '/') + (isDirectory ? "/" : ""));
+                CurrentItems.Add(new FileSystemItem { Name = cleanName, IsDirectory = isDirectory });
+            }
+        }
+
+        private async Task LoadFileContentAsync(string filePath)
+        {
+            if (_client == null || _stream == null || string.IsNullOrEmpty(filePath))
+                return;
+
+            var response = await _clientHandler.SendMessageAndReceiveResponseAsync(_stream, $"GET {filePath}");
+            if (response != null)
+            {
+                CurrentItems.Clear();
+                CurrentItems.Add(new FileSystemItem { Path = filePath.Split('/').Last(), Name = response, IsDirectory = false});
+            }
+        }
+
+        private void Disconnect()
+        {
+            _client?.Close();
+            _stream?.Close();
+            _client = null;
+            _stream = null;
+            StatusMessage = "Disconnected";
+            AvailableDrives.Clear();
+            CurrentItems.Clear();
+            CurrentPath = string.Empty;
         }
     }
-    
-    
 }

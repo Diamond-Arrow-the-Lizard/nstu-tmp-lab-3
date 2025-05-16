@@ -5,6 +5,7 @@ using Lab3.Models.Handlers;
 using Lab3.Models.Services;
 using Lab3.Interfaces.Handlers;
 using System.Threading.Tasks;
+using Lab3.Interfaces;
 
 public class ServerApp
 {
@@ -14,7 +15,7 @@ public class ServerApp
     {
         var fileSystemService = new FileSystemService();
         var diskService = new DiskService();
-        var requestHandler = new RequestHandler(fileSystemService);
+        var requestHandler = new RequestHandler(fileSystemService, diskService); 
         var serverHandler = new ServerHandler(port);
 
         TcpListener listener = new TcpListener(IPAddress.Any, port);
@@ -23,35 +24,34 @@ public class ServerApp
 
         while (true)
         {
-            var client = await listener.AcceptTcpClientAsync(); // Accept client asynchronously
-            _ = HandleClientAsync(client, diskService, serverHandler, requestHandler); // Handle client in a separate task
+            var client = await listener.AcceptTcpClientAsync();
+            _ = HandleClientAsync(client, serverHandler, requestHandler, diskService); 
         }
     }
 
-    static async Task HandleClientAsync(TcpClient client, DiskService diskService, ServerHandler serverHandler, RequestHandler requestHandler)
+    static async Task HandleClientAsync(TcpClient client, ServerHandler serverHandler, RequestHandler requestHandler, IDiskService diskService) 
     {
         Console.WriteLine($"[{DateTime.Now}] Client connected.");
         using var stream = client.GetStream();
 
         try
         {
-            // Send initial drive list
             var driveList = diskService.GetDrivesString();
             await serverHandler.SendMessageAsync(stream, driveList);
-
-            // Handle multiple requests from the same client
+            Console.WriteLine($"[{DateTime.Now}] Drive list sent to client: {driveList}");
+            
             while (true)
             {
-                string path = await serverHandler.ReceiveMessageAsync(stream);
-                if (string.IsNullOrEmpty(path)) // Client might disconnect
+                string request = await serverHandler.ReceiveMessageAsync(stream);
+                if (string.IsNullOrEmpty(request))
                     break;
 
-                string response = requestHandler.HandleRequest(path);
+                string response = await requestHandler.HandleRequestAsync(request); 
                 await serverHandler.SendMessageAsync(stream, response);
                 Console.WriteLine($"[{DateTime.Now}] Response sent to client.");
             }
         }
-        catch (IOException ex) // Catch connection errors
+        catch (IOException ex)
         {
             Console.WriteLine($"[{DateTime.Now}] Client disconnected unexpectedly: {ex.Message}");
         }
