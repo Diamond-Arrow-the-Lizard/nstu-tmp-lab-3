@@ -5,5 +5,6 @@ using Lab3.Interfaces;
 public class DiskService : IDiskService
 {
     public string GetDrivesString() =>
-        string.Join(";", DriveInfo.GetDrives().Select(d => d.Name));
+        string.Join(";", DriveInfo.GetDrives().Select(d => d.Name + "/"));
+    
 }

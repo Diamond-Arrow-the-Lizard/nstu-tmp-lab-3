@@ -1,4 +1,6 @@
-﻿namespace ClientUI.ViewModels;
+﻿using System.IO;
+
+namespace ClientUI.ViewModels;
 
 using System;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -8,6 +10,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using Lab3.Models.Handlers;
+using Models;
 
 public partial class ClientViewModel : ObservableObject
 {
@@ -22,7 +25,7 @@ public partial class ClientViewModel : ObservableObject
     private string _statusMessage = "Ready";
 
     [ObservableProperty]
-    private string _selectedPath;
+    private string _selectedPath = "";
 
     [ObservableProperty]
     private string _response;
@@ -30,6 +33,39 @@ public partial class ClientViewModel : ObservableObject
     private readonly ObservableCollection<string> _availableDrives = new();
 
     public ObservableCollection<string> AvailableDrives => _availableDrives;
+ 
+    [ObservableProperty]
+    private ObservableCollection<FileSystemItem> _currentItems = new();
+
+    [ObservableProperty]
+    private string _currentPath;
+
+    [RelayCommand]
+    private async Task NavigateToAsync(FileSystemItem item)
+    {
+        if (item?.IsDirectory != true) return;
+     
+        SelectedPath = item.Path; 
+        await SendRequestAsync();
+    }
+
+    [RelayCommand]
+    private async Task GoUpAsync()
+    {
+        if (string.IsNullOrEmpty(CurrentPath)) return;
+     
+        var parent = System.IO.Path.GetDirectoryName(CurrentPath);
+        if (parent != null) // Change to null check
+        {
+            SelectedPath = parent;
+            await SendRequestAsync();
+        }
+        else
+        {
+            SelectedPath = ""; 
+            await SendRequestAsync();
+        }
+    }
 
     public ClientViewModel(ClientHandler clientHandler)
     {
@@ -53,6 +89,13 @@ public partial class ClientViewModel : ObservableObject
                 AvailableDrives.Add(drive);
             }
             StatusMessage = "Connected";
+
+            // Optionally set the first drive as the SelectedPath for immediate display
+            if (AvailableDrives.Count > 0)
+            {
+                SelectedPath = AvailableDrives[0];
+                await SendRequestAsync(); // Immediately load the contents of the first drive
+            }
         }
         catch (Exception ex)
         {
@@ -60,7 +103,6 @@ public partial class ClientViewModel : ObservableObject
             Disconnect();
         }
     }
-
     [RelayCommand]
     private async Task SendRequestAsync()
     {
@@ -68,8 +110,12 @@ public partial class ClientViewModel : ObservableObject
 
         try
         {
+            StatusMessage = "Loading...";
             await _clientHandler.SendMessageAsync(_stream, SelectedPath);
-            Response = await _clientHandler.ReceiveMessageAsync(_stream);
+            var response = await _clientHandler.ReceiveMessageAsync(_stream);
+         
+            CurrentPath = SelectedPath;
+            ParseResponse(response);
             StatusMessage = "Request completed";
         }
         catch (Exception ex)
@@ -78,7 +124,6 @@ public partial class ClientViewModel : ObservableObject
             Disconnect();
         }
     }
-
     private void Disconnect()
     {
         _stream?.Dispose();
@@ -86,4 +131,35 @@ public partial class ClientViewModel : ObservableObject
         AvailableDrives.Clear();
         Response = string.Empty;
     }
+    private void ParseResponse(string response)
+    {
+        CurrentItems.Clear();
+        var items = response.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+
+        foreach (var item in items)
+        {
+            var isDirectory = item.EndsWith("/");
+            var cleanName = isDirectory ? item.TrimEnd('/') : item;
+
+            // Robustly combine paths and normalize
+            string fullPath;
+            if (string.IsNullOrEmpty(CurrentPath) || CurrentPath == "/")
+            {
+                fullPath = cleanName; // Handle root
+            }
+            else
+            {
+                fullPath = CurrentPath + "/" + cleanName;
+            }
+
+            CurrentItems.Add(new FileSystemItem
+            {
+                Name = cleanName,
+                Path = fullPath,
+                IsDirectory = isDirectory
+            });
+        }
+    }
+    
+    
 }

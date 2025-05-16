@@ -1,41 +1,53 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:ClientUI.ViewModels"
+        xmlns:models="using:ClientUI.Models"
         x:Class="ClientUI.Views.ClientView"
         x:DataType="vm:ClientViewModel"
         Title="File System Client"
-        Width="600" Height="500">
+        Width="1200" Height="1000">
     <Design.DataContext>
         <vm:ClientViewModel/>
     </Design.DataContext>
 
     <StackPanel Margin="20" Spacing="10">
-         <TextBlock Text="Server IP:" />
-         <TextBox Text="{Binding ServerIp}" />
+        <!-- Connection Section -->
+        <TextBlock Text="Server IP:" />
+        <TextBox Text="{Binding ServerIp}" />
         
         <Button Content="Connect" 
                 Command="{Binding ConnectCommand}"
                 HorizontalAlignment="Stretch"/>
         
+        <!-- Drives List -->
         <TextBlock Text="Available Drives:"/>
         <ListBox ItemsSource="{Binding AvailableDrives}"
                  SelectedItem="{Binding SelectedPath}"
-                 Height="80"/>
+                 Height="500"/>
         
-        <TextBlock Text="Enter path:" />
-         <TextBox Text="{Binding SelectedPath}"/>
+        <!-- Navigation Controls -->
+        <StackPanel Orientation="Horizontal" Spacing="5">
+            <Button Content="Go Up" 
+                    Command="{Binding GoUpCommand}"
+                    IsEnabled="{Binding CurrentPath, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+            <TextBlock Text="{Binding CurrentPath}" VerticalAlignment="Center"/>
+        </StackPanel>
         
-        <Button Content="Send Request" 
-                Command="{Binding SendRequestCommand}"
-                HorizontalAlignment="Stretch"/>
+        <!-- File Browser -->
+        <ListBox ItemsSource="{Binding CurrentItems}" 
+                 SelectedItem="{Binding SelectedPath}"
+                 Height="200">
+            <ListBox.ItemTemplate>
+                <DataTemplate DataType="models:FileSystemItem">
+                    <StackPanel Orientation="Horizontal" Spacing="5">
+                        <TextBlock Text="{Binding Icon}"/>
+                        <TextBlock Text="{Binding Name}"/>
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
         
-        <TextBlock Text="Response:"/>
-        <TextBox Text="{Binding Response}" 
-                 AcceptsReturn="True"
-                 IsReadOnly="True"
-                 TextWrapping="Wrap"
-                 Height="150"/>
-        
+        <!-- Status Message -->
         <TextBlock Text="{Binding StatusMessage}"
                    Foreground="Gray"/>
     </StackPanel>
