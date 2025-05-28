@@ -17,6 +17,7 @@ public class RequestHandler : IRequestHandler
     {
         try
         {
+            await Task.Delay(0);
             if (request == "LIST_DRIVES")
             {
                 return _diskService.GetDrivesString();
