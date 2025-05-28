@@ -6,6 +6,8 @@ using System.Linq;
 using Avalonia.Markup.Xaml;
 using ProcessDispatcher.ViewModels;
 using ProcessDispatcher.Views;
+using Microsoft.Extensions.DependencyInjection;
+
 
 namespace ProcessDispatcher;
 
@@ -18,6 +20,11 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        var collection = new ServiceCollection();
+        collection = ProvideServices();
+
+        var services = collection.BuildServiceProvider();
+        
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
@@ -25,12 +32,13 @@ public partial class App : Application
             DisableAvaloniaDataAnnotationValidation();
             desktop.MainWindow = new MainWindow
             {
-                DataContext = new MainWindowViewModel(),
+                DataContext = services.GetRequiredService<MainWindowViewModel>(),
             };
         }
 
         base.OnFrameworkInitializationCompleted();
     }
+
 
     private void DisableAvaloniaDataAnnotationValidation()
     {
@@ -43,5 +51,14 @@ public partial class App : Application
         {
             BindingPlugins.DataValidators.Remove(plugin);
         }
+    }
+
+        private static ServiceCollection ProvideServices()
+    {
+        var services = new ServiceCollection();
+        
+        services.AddSingleton<MainWindowViewModel>();
+
+        return services;
     }
 }
