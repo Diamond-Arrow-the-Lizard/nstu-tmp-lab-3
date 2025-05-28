@@ -17,14 +17,14 @@ namespace ClientUI.ViewModels
     public partial class ClientViewModel : ViewModelBase
     {
         private readonly ClientHandler _clientHandler;
-        private TcpClient _client;
-        private NetworkStream _stream;
+        private TcpClient? _client;
+        private NetworkStream? _stream;
         [ObservableProperty] private string _currentPath = string.Empty;
         [ObservableProperty] private string _serverIp = "127.0.0.1";
         [ObservableProperty] private string _statusMessage = "Disconnected";
         [ObservableProperty] private ObservableCollection<string> _availableDrives = new();
         [ObservableProperty] private ObservableCollection<FileSystemItem> _currentItems = new();
-        [ObservableProperty] private string _selectedPath; // This will now represent the selected item in the upper ListBox
+        [ObservableProperty] private string? _selectedPath; // This will now represent the selected item in the upper ListBox
 
         public ClientViewModel()
         {
@@ -64,6 +64,7 @@ namespace ClientUI.ViewModels
             {
                 // Already at the root (drives level), no need to go up further
                 AvailableDrives.Clear();
+                ArgumentNullException.ThrowIfNull(_stream);
                 var drivesResponse = await _clientHandler.SendMessageAndReceiveResponseAsync(_stream, "LIST_DRIVES");
                 if (drivesResponse != null)
                 {
@@ -82,6 +83,7 @@ namespace ClientUI.ViewModels
             {
                 CurrentPath = "/"; // Go back to the root (drives)
                 AvailableDrives.Clear();
+                ArgumentNullException.ThrowIfNull(_stream);
                 var drivesResponse = await _clientHandler.SendMessageAndReceiveResponseAsync(_stream, "LIST_DRIVES");
                 if (drivesResponse != null)
                 {
@@ -99,7 +101,7 @@ namespace ClientUI.ViewModels
             }
         }
 
-        partial void OnSelectedPathChanged(string value)
+        partial void OnSelectedPathChanged(string? value)
         {
             if (_client != null && !string.IsNullOrEmpty(value))
             {
