@@ -1,0 +1,44 @@
+<Window xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ControlPanel.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="ControlPanel.Views.ControlPanelView"
+             x:DataType="vm:ControlPanelViewModel">
+  <Design.DataContext>
+    <vm:ControlPanelViewModel />
+  </Design.DataContext>
+
+  <Grid RowDefinitions="Auto, Auto, *, Auto">
+    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" Margin="10">
+      <TextBlock Text="IP контроллера:" VerticalAlignment="Center"/>
+      <TextBox Text="{Binding ServerIp}" Width="150"/>
+      <TextBlock Text="Порт:" VerticalAlignment="Center"/>
+      <TextBox Text="{Binding ServerPort}" Width="80"/>
+      <Button Content="Подключиться" Command="{Binding ConnectToServerCommand}" IsEnabled="{Binding !IsConnected}"/>
+      <Button Content="Отключиться" Command="{Binding DisconnectCommand}" IsEnabled="{Binding IsConnected}"/>
+      <TextBlock Text="{Binding ConnectionStatus}" VerticalAlignment="Center" Margin="10,0,0,0"/>
+    </StackPanel>
+
+    <Separator Grid.Row="1" Margin="0,5"/>
+
+    <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+      <ItemsControl ItemsSource="{Binding EquipmentButtons}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <WrapPanel Orientation="Horizontal" ItemWidth="100" ItemHeight="100" Margin="10"/>
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate DataType="vm:EquipmentButtonViewModel">
+            <Border BorderBrush="Black" BorderThickness="1" CornerRadius="5" Margin="5" Background="{Binding StateColor}">
+              <TextBlock Text="{Binding Id}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                         FontSize="24" FontWeight="Bold" Foreground="White"/>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </ScrollViewer>
+  </Grid>
+</Window>
