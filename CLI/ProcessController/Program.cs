@@ -8,7 +8,7 @@ namespace ProcessController
 {
     class ControllerProgram
     {
-        private static readonly int ServerPort = 8888; // Порт диспетчера
+        private static readonly int ServerPort = 8888; // Dispatcher port
         private static readonly Random RandomGenerator = new Random();
         private static readonly double MinTemperature = 0.0;
         private static readonly double MaxTemperature = 1000.0;
@@ -16,11 +16,11 @@ namespace ProcessController
         private static readonly double MaxPressure = 6.0;
         private static readonly TimeSpan SendInterval = TimeSpan.FromSeconds(1);
 
-        private static string? ServerAddress = ""; // IP-адрес диспетчера
+        private static string? ServerAddress = ""; // Dispatcher IP address
 
         static async Task Main(string[] args)
         {
-            Console.WriteLine("Введите IP адрес диспетчера (нажмите Enter для localhost)");
+            Console.WriteLine("Enter the dispatcher's IP address (press Enter for localhost)");
             ServerAddress = Console.ReadLine(); 
 
             if(string.IsNullOrEmpty(ServerAddress))
@@ -28,10 +28,10 @@ namespace ProcessController
                 ServerAddress = "127.0.0.1";
             }
 
-            Console.WriteLine("Контроллер технологического процесса запущен.");
-            Console.WriteLine($"Попытка подключения к диспетчеру по адресу {ServerAddress}:{ServerPort}...");
+            Console.WriteLine("Process controller started.");
+            Console.WriteLine($"Attempting to connect to dispatcher at {ServerAddress}:{ServerPort}...");
 
-            while (true) // Бесконечный цикл для попыток переподключения
+            while (true) // Infinite loop for reconnect attempts
             {
                 TcpClient? client = null;
                 NetworkStream? stream = null;
@@ -41,45 +41,45 @@ namespace ProcessController
                     client = new TcpClient();
                     await client.ConnectAsync(ServerAddress, ServerPort);
                     stream = client.GetStream();
-                    Console.WriteLine("Соединение с диспетчером установлено.");
+                    Console.WriteLine("Connection with dispatcher established.");
 
-                    // Цикл генерации и отправки данных
+                    // Loop for generating and sending data
                     while (client.Connected)
                     {
                         double temperature = MinTemperature + (RandomGenerator.NextDouble() * (MaxTemperature - MinTemperature));
                         double pressure = MinPressure + (RandomGenerator.NextDouble() * (MaxPressure - MinPressure));
 
-                        string dataToSend = $"{temperature:F2};{pressure:F2}"; // Форматируем до 2 знаков после запятой
-                        byte[] buffer = Encoding.UTF8.GetBytes(dataToSend + Environment.NewLine); // Добавляем NewLine как разделитель сообщений
+                        string dataToSend = $"{temperature:F2};{pressure:F2}"; // Format to 2 decimal places
+                        byte[] buffer = Encoding.UTF8.GetBytes(dataToSend + Environment.NewLine); // Add NewLine as message delimiter
 
                         await stream.WriteAsync(buffer, 0, buffer.Length);
-                        Console.WriteLine($"Отправлено: Температура = {temperature:F2}°C, Давление = {pressure:F2} атм");
+                        Console.WriteLine($"Sent: Temperature = {temperature:F2}°C, Pressure = {pressure:F2} atm");
 
                         await Task.Delay(SendInterval);
                     }
                 }
                 catch (SocketException ex)
                 {
-                    Console.WriteLine($"Ошибка подключения или отправки: {ex.Message}. Попытка переподключения через 5 секунд...");
+                    Console.WriteLine($"Connection or send error: {ex.Message}. Retrying in 5 seconds...");
                 }
                 catch (IOException ex)
                 {
-                    Console.WriteLine($"Ошибка ввода-вывода (возможно, соединение разорвано): {ex.Message}. Попытка переподключения через 5 секунд...");
+                    Console.WriteLine($"I/O error (connection possibly broken): {ex.Message}. Retrying in 5 seconds...");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Непредвиденная ошибка: {ex.Message}. Попытка переподключения через 5 секунд...");
+                    Console.WriteLine($"Unexpected error: {ex.Message}. Retrying in 5 seconds...");
                 }
                 finally
                 {
                     stream?.Close();
                     client?.Close();
-                    Console.WriteLine("Соединение с диспетчером разорвано или не удалось установить.");
+                    Console.WriteLine("Connection with dispatcher terminated or failed to establish.");
                 }
 
-                // Пауза перед следующей попыткой подключения
+                // Pause before next connection attempt
                 await Task.Delay(TimeSpan.FromSeconds(5));
-                Console.WriteLine("Повторная попытка подключения...");
+                Console.WriteLine("Retrying connection...");
             }
         }
     }

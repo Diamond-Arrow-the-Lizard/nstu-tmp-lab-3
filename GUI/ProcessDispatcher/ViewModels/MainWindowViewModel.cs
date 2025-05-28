@@ -41,7 +41,7 @@ public partial class MainWindowViewModel : ObservableObject
     private AvaPlot _pressureVsTemperaturePlot = new AvaPlot();
 
     [ObservableProperty]
-    private string _statusMessage = "Ожидание данных от контроллера...";
+    private string _statusMessage = "Waiting for data from controller...";
 
     [ObservableProperty]
     private string _currentTemperature = "N/A";
@@ -58,9 +58,9 @@ public partial class MainWindowViewModel : ObservableObject
     private void InitializePlots()
     {
         // Temperature vs. Time
-        TemperaturePlot.Plot.Title("Температура (°C) от Времени (с)");
-        TemperaturePlot.Plot.XLabel("Время (с)");
-        TemperaturePlot.Plot.YLabel("Температура (°C)");
+        TemperaturePlot.Plot.Title("Temperature (°C) vs. Time (s)");
+        TemperaturePlot.Plot.XLabel("Time (s)");
+        TemperaturePlot.Plot.YLabel("Temperature (°C)");
         // Initialize Signal plot with the data list
         _tempSignalPlot = TemperaturePlot.Plot.Add.Signal(_temperatureData); 
         _tempSignalPlot.Color = Colors.Red;
@@ -68,9 +68,9 @@ public partial class MainWindowViewModel : ObservableObject
         TemperaturePlot.Refresh();
 
         // Pressure vs. Time
-        PressurePlot.Plot.Title("Давление (атм) от Времени (с)");
-        PressurePlot.Plot.XLabel("Время (с)");
-        PressurePlot.Plot.YLabel("Давление (атм)");
+        PressurePlot.Plot.Title("Pressure (atm) vs. Time (s)");
+        PressurePlot.Plot.XLabel("Time (s)");
+        PressurePlot.Plot.YLabel("Pressure (atm)");
         // Initialize Signal plot with the data list
         _pressureSignalPlot = PressurePlot.Plot.Add.Signal(_pressureData); 
         _pressureSignalPlot.Color = Colors.Blue;
@@ -78,9 +78,9 @@ public partial class MainWindowViewModel : ObservableObject
         PressurePlot.Refresh();
 
         // Pressure vs. Temperature
-        PressureVsTemperaturePlot.Plot.Title("Давление (атм) от Температуры (°C)");
-        PressureVsTemperaturePlot.Plot.XLabel("Температура (°C)");
-        PressureVsTemperaturePlot.Plot.YLabel("Давление (атм)");
+        PressureVsTemperaturePlot.Plot.Title("Pressure (atm) vs. Temperature (°C)");
+        PressureVsTemperaturePlot.Plot.XLabel("Temperature (°C)");
+        PressureVsTemperaturePlot.Plot.YLabel("Pressure (atm)");
         // Initialize Scatter plot with both data lists
         _pressureVsTempScatterPlot = PressureVsTemperaturePlot.Plot.Add.Scatter(_temperatureData, _pressureData); 
         _pressureVsTempScatterPlot.Color = Colors.Green;
@@ -94,7 +94,7 @@ public partial class MainWindowViewModel : ObservableObject
         _cancellationTokenSource = new CancellationTokenSource();
         _tcpListener = new TcpListener(IPAddress.Any, _port);
         Task.Run(async () => await ListenForConnections(_cancellationTokenSource.Token), _cancellationTokenSource.Token);
-        StatusMessage = $"Прослушивание порта {_port}...";
+        StatusMessage = $"Listening on port {_port}...";
     }
 
     private async Task ListenForConnections(CancellationToken token)
@@ -104,24 +104,24 @@ public partial class MainWindowViewModel : ObservableObject
             _tcpListener!.Start();
             while (!token.IsCancellationRequested)
             {
-                StatusMessage = $"Ожидание подключения контроллера на порту {_port}...";
+                StatusMessage = $"Waiting for controller connection on port {_port}...";
                 TcpClient client = await _tcpListener.AcceptTcpClientAsync(token);
-                StatusMessage = $"Контроллер подключен: {client.Client.RemoteEndPoint}";
+                StatusMessage = $"Controller connected: {client.Client.RemoteEndPoint}";
                 _ = HandleClient(client, token);
             }
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Прослушивание остановлено.";
+            StatusMessage = "Listening stopped.";
         }
         catch (SocketException ex)
         {
-            StatusMessage = $"Ошибка сети TcpListener: {ex.Message}";
+            StatusMessage = $"TcpListener network error: {ex.Message}";
             Debug.WriteLine($"TcpListener SocketError: {ex}");
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Ошибка TcpListener: {ex.Message}";
+            StatusMessage = $"TcpListener error: {ex.Message}";
             Debug.WriteLine($"TcpListener Error: {ex}");
         }
         finally
@@ -156,17 +156,17 @@ public partial class MainWindowViewModel : ObservableObject
         }
         catch (IOException ex)
         {
-            StatusMessage = $"Ошибка чтения данных (контроллер мог отключиться): {ex.Message}";
+            StatusMessage = $"Data reading error (controller may have disconnected): {ex.Message}";
             Debug.WriteLine($"IO Error with client: {ex.Message}");
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Ошибка при обработке клиента: {ex.Message}";
+            StatusMessage = $"Error handling client: {ex.Message}";
             Debug.WriteLine($"Error handling client: {ex}");
         }
         finally
         {
-            StatusMessage = "Контроллер отключился.";
+            StatusMessage = "Controller disconnected.";
             Debug.WriteLine($"Client {client.Client.RemoteEndPoint} disconnected or handler finished.");
         }
     }
@@ -187,8 +187,8 @@ public partial class MainWindowViewModel : ObservableObject
                 _pressureData.Add(pressure);
 
                 CurrentTemperature = $"{temperature:F2} °C";
-                CurrentPressure = $"{pressure:F2} атм";
-                StatusMessage = $"Данные получены: T={temperature:F2}, P={pressure:F2}";
+                CurrentPressure = $"{pressure:F2} atm";
+                StatusMessage = $"Data received: T={temperature:F2}, P={pressure:F2}";
 
                 // No need to call .Update() for SignalPlot or ScatterPlot in ScottPlot 5
                 // They reference the underlying lists, so just modifying the lists and refreshing is enough.
@@ -219,14 +219,14 @@ public partial class MainWindowViewModel : ObservableObject
         }
         else
         {
-            StatusMessage = $"Ошибка парсинга данных: {data}";
+            StatusMessage = $"Data parsing error: {data}";
             Debug.WriteLine($"Parse error: {data}");
         }
     }
 
     public void Cleanup()
     {
-        StatusMessage = "Остановка служб...";
+        StatusMessage = "Stopping services...";
         _cancellationTokenSource?.Cancel();
         _cancellationTokenSource?.Dispose();
         _tcpListener?.Stop();
