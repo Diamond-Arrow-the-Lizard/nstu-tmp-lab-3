@@ -8,7 +8,6 @@ namespace ProcessController
 {
     class ControllerProgram
     {
-        private static readonly string ServerAddress = "127.0.0.1"; // IP-адрес диспетчера
         private static readonly int ServerPort = 8888; // Порт диспетчера
         private static readonly Random RandomGenerator = new Random();
         private static readonly double MinTemperature = 0.0;
@@ -17,8 +16,18 @@ namespace ProcessController
         private static readonly double MaxPressure = 6.0;
         private static readonly TimeSpan SendInterval = TimeSpan.FromSeconds(1);
 
+        private static string? ServerAddress = ""; // IP-адрес диспетчера
+
         static async Task Main(string[] args)
         {
+            Console.WriteLine("Введите IP адрес диспетчера (нажмите Enter для localhost)");
+            ServerAddress = Console.ReadLine(); 
+
+            if(string.IsNullOrEmpty(ServerAddress))
+            {
+                ServerAddress = "127.0.0.1";
+            }
+
             Console.WriteLine("Контроллер технологического процесса запущен.");
             Console.WriteLine($"Попытка подключения к диспетчеру по адресу {ServerAddress}:{ServerPort}...");
 
